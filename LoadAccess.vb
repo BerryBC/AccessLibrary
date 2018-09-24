@@ -127,6 +127,52 @@ Public Class LoadAccess
 
     End Sub
 
+
+
+    Public Sub RunSQL(ByVal strTable As String, ByVal strSQL As String)
+        Dim intHowManyCol As Integer = 0
+        Dim strTmpValues As String = ""
+        Dim adaptData As New OleDbDataAdapter
+        Dim i As Integer
+        Try
+
+            '连接数据库
+            If ((Not bolIsAlwaysConnect)) Then
+                If ((cnConnection Is Nothing)) Then
+
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+                ElseIf (cnConnection.State = ConnectionState.Closed) Then
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+
+                End If
+
+            End If
+
+
+            '对应数据源与SQL语句
+            Dim cmd As New OleDbCommand(strSQL, cnConnection)
+            With cmd
+                .CommandType = CommandType.Text
+            End With
+            cmd.ExecuteNonQuery()
+
+            If ((Not bolIsAlwaysConnect) And (cnConnection.State = ConnectionState.Open)) Then
+                cnConnection.Close()
+            End If
+        Catch ex As Exception
+            If ((Not bolIsAlwaysConnect) And (cnConnection.State = ConnectionState.Open)) Then
+                cnConnection.Close()
+            End If
+            Throw New Exception(ex.Message, ex)
+
+        End Try
+
+
+    End Sub
+
+
     ''' <summary>
     ''' 反馈数据库表中的格式
     ''' </summary>
@@ -138,9 +184,17 @@ Public Class LoadAccess
         Dim dtFormatData As New DataTable
         Try
 
-            If ((Not bolIsAlwaysConnect) And (cnConnection.State = ConnectionState.Closed)) Then
-                cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
-                cnConnection.Open()
+            If ((Not bolIsAlwaysConnect)) Then
+                If ((cnConnection Is Nothing)) Then
+
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+                ElseIf (cnConnection.State = ConnectionState.Closed) Then
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+
+                End If
+
             End If
 
             adaptData = New OleDb.OleDbDataAdapter("SELECT top 1 * from " & strTable & ";", cnConnection)
@@ -163,9 +217,17 @@ Public Class LoadAccess
 
         Try
 
-            If ((Not bolIsAlwaysConnect) And (cnConnection.State = ConnectionState.Closed)) Then
-                cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
-                cnConnection.Open()
+            If ((Not bolIsAlwaysConnect)) Then
+                If ((cnConnection Is Nothing)) Then
+
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+                ElseIf (cnConnection.State = ConnectionState.Closed) Then
+                    cnConnection = New OleDb.OleDbConnection(ConnectString(strFileName))
+                    cnConnection.Open()
+
+                End If
+
             End If
 
             odbcmdCmd.Connection = cnConnection
@@ -182,6 +244,21 @@ Public Class LoadAccess
             Throw New Exception(ex.Message, ex)
         End Try
 
+    End Function
+
+    Public Function GetAccessDataTableBySQL(ByRef strSQL As String) As DataTable
+        Try
+
+
+            Dim cmd As New OleDbCommand(strSQL, cnConnection)
+            With cmd
+                .CommandType = CommandType.Text
+            End With
+            Return GetAccessDataTable(cmd)
+
+        Catch ex As Exception
+            Throw New Exception(ex.Message, ex)
+        End Try
     End Function
 
 
